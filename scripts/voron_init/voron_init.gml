@@ -19,8 +19,16 @@ function voron_init() {
 	global.voron_lerp_world  = 0.1
 	global.voron_lerp_view   = 0.05
 
-	//Distance where views are merged together
-	global.voron_combination_distance = 200
+	//Split-screen is experimental, so it's off by default. When off we set the merge distance
+	//to infinity: every player batches into a single view centred on their centroid, the
+	//merger shader draws view 0 fullscreen, and the screen never splits -- while the camera
+	//still follows the characters exactly as before. Toggle it with voron_set_splitscreen().
+	global.voron_splitscreen_enabled  = false
+	global.voron_split_distance       = 200		//Distance where views split apart, when enabled
+	global.voron_combination_distance = global.voron_splitscreen_enabled ? global.voron_split_distance : infinity
+
+	//Debug overlay (top-right checkbox, toggled with F3)
+	global.show_voron_debug = false
 
 	//Positions for all players
 	for(var c = 0; c < voron_OBJECTS_MAX; c++){
@@ -35,4 +43,13 @@ function voron_init() {
 	}
 
 
+}
+
+/// @desc Enable or disable Voronoi split-screen at runtime. When disabled the merge distance
+///       becomes infinite, so all players collapse into a single view (the screen never
+///       splits); when enabled it returns to the normal split distance.
+/// @arg _enabled Whether split-screen should be active
+function voron_set_splitscreen(_enabled) {
+	global.voron_splitscreen_enabled  = _enabled;
+	global.voron_combination_distance = _enabled ? global.voron_split_distance : infinity;
 }

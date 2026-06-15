@@ -142,6 +142,24 @@ function objects_of_type(_obj_index) {
 	return _res;
 }
 
+/// @desc Layout (in GUI space) of the F3 debug overlay panel in the top-right corner.
+///       Shared by the click test (obj_controller Step) and the draw (obj_controller Draw GUI)
+///       so the clickable area always matches what's drawn.
+/// @returns Struct with panel rect {px, py, pw, ph} and checkbox rect {bx, by, box}
+function debug_overlay_layout() {
+	var _gw = display_get_gui_width();
+	var _pad = 10;
+	var _pw = 250;
+	var _ph = 30;
+	var _px = _gw - _pw - _pad;
+	var _py = _pad;
+	var _box = 16;
+	return {
+		px: _px, py: _py, pw: _pw, ph: _ph,
+		bx: _px + 8, by: _py + (_ph - _box) * 0.5, box: _box
+	};
+}
+
 /// @desc Tint sprites in the world light map by the light level at a single sample point,
 ///       so the screen-space shadow pass darkens them uniformly instead of per-pixel.
 ///
@@ -170,10 +188,26 @@ function lightmap_tint_lit_sprites(_camX, _camY) {
 
 	// Pass 1: read the light at each sprite's sample point. These are GPU readbacks, so they
 	// must happen before we set the surface as a render target below.
-	var _ids = [];
-	var _cols = [];
+	//
+	// Walls are never drawn in front of actors (that's why the scene doesn't bother depth-
+	// sorting them), so we stamp all walls first as a flat "background" layer, then the actors
+	// on top. Among themselves the actors are stamped back-to-front by y (matching depthsort),
+	// so where two sprites overlap the one in front writes the light map last and wins --
+	// otherwise a brighter sprite behind could bleed its light onto a darker one in front.
+
+	// Front-facing walls: sample the floor a few pixels below the wall (in front of the face).
+	// Walls tile a grid and don't overlap each other, so their order doesn't matter.
+	var _wallStamps = [];
+	with (obj_wall) {
+		if (image_index != 1) continue;
+		var _sx = floor((bbox_left + bbox_right) * 0.5 - _camX);
+		var _sy = floor(bbox_bottom + 3 - _camY);
+		if (_sx < 0 || _sy < 0 || _sx >= _sw || _sy >= _sh) continue;
+		array_push(_wallStamps, { inst: id, col: surface_getpixel(_surf, _sx, _sy) });
+	}
 
 	// Dynamic actors: sample at the feet (the floor they stand on)
+	var _actorStamps = [];
 	var _actors = [obj_player, obj_helmet, obj_enemy, obj_enemy_ram,
 		obj_spider, obj_spider_small, obj_bat];
 	for (var a = 0; a < array_length(_actors); a++) {
@@ -181,37 +215,38 @@ function lightmap_tint_lit_sprites(_camX, _camY) {
 			var _sx = floor((bbox_left + bbox_right) * 0.5 - _camX);
 			var _sy = floor(bbox_bottom - 1 - _camY);
 			if (_sx < 0 || _sy < 0 || _sx >= _sw || _sy >= _sh) continue;
-			array_push(_ids, id);
-			array_push(_cols, surface_getpixel(_surf, _sx, _sy));
+			array_push(_actorStamps, { inst: id, col: surface_getpixel(_surf, _sx, _sy), sortY: y });
 		}
 	}
+	array_sort(_actorStamps, function(_a, _b) { return _a.sortY - _b.sortY; });
 
-	// Front-facing walls: sample the floor a few pixels below the wall (in front of the face)
-	with (obj_wall) {
-		if (image_index != 1) continue;
-		var _sx = floor((bbox_left + bbox_right) * 0.5 - _camX);
-		var _sy = floor(bbox_bottom + 3 - _camY);
-		if (_sx < 0 || _sy < 0 || _sx >= _sw || _sy >= _sh) continue;
-		array_push(_ids, id);
-		array_push(_cols, surface_getpixel(_surf, _sx, _sy));
-	}
+	if (array_length(_wallStamps) == 0 && array_length(_actorStamps) == 0) return;
 
-	var _n = array_length(_ids);
-	if (_n == 0) return;
-
-	// Pass 2: stamp each silhouette into the light map with its sampled light value.
-	// gpu_set_fog(true, col, 0, 1) forces every drawn fragment to `col` while keeping the
-	// sprite's alpha as a mask (same trick as drawFlashEffect), so only the sprite's pixels
-	// are overwritten -- the surrounding floor light is left untouched.
+	// Pass 2: stamp each silhouette into the light map with its sampled light value (walls
+	// first, then actors on top). gpu_set_fog(true, col, 0, 1) forces every drawn fragment to
+	// `col` while keeping the sprite's alpha as a mask (same trick as drawFlashEffect), so only
+	// the sprite's pixels are overwritten -- the surrounding floor light is left untouched.
 	surface_set_target(_surf);
 	gpu_set_blendmode(bm_normal);
+	lightmap_stamp_sprites(_wallStamps, _camX, _camY);
+	lightmap_stamp_sprites(_actorStamps, _camX, _camY);
+	gpu_set_fog(false, c_white, 0, 0);
+	surface_reset_target();
+}
+
+/// @desc Stamp a list of {inst, col} silhouettes into the currently targeted light map.
+///       Assumes the caller has set the render target and bm_normal blend mode, and will
+///       reset gpu_set_fog afterwards. See lightmap_tint_lit_sprites.
+/// @arg _stamps Array of structs with .inst (instance id) and .col (light colour to flood with)
+/// @arg _camX The active camera's left edge in room space
+/// @arg _camY The active camera's top edge in room space
+function lightmap_stamp_sprites(_stamps, _camX, _camY) {
+	var _n = array_length(_stamps);
 	for (var i = 0; i < _n; i++) {
-		gpu_set_fog(true, _cols[i], 0, 1);
-		with (_ids[i]) {
+		gpu_set_fog(true, _stamps[i].col, 0, 1);
+		with (_stamps[i].inst) {
 			draw_sprite_ext(sprite_index, image_index, x - _camX, y - _camY,
 				image_xscale, image_yscale, image_angle, c_white, 1);
 		}
 	}
-	gpu_set_fog(false, c_white, 0, 0);
-	surface_reset_target();
 }
