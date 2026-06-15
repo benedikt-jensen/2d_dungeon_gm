@@ -1,4 +1,3 @@
-instance_create_layer(0,0,layer_get_id("Lights"),obj_light_player)
 function lighting_global() {
 	//
 	//	Globals, enums and macros for this lighting engine

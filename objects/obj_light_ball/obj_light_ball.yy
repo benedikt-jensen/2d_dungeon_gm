@@ -30,7 +30,7 @@
   "physicsShapePoints":[],
   "physicsStartAwake":true,
   "properties":[
-    {"$GMObjectProperty":"v1","%Name":"speed","filters":[
+    {"$GMObjectProperty":"v2","%Name":"speed","filters":[
         "GMTileSet",
         "GMSprite",
         "GMSound",

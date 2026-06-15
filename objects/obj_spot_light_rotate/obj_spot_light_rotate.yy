@@ -34,7 +34,7 @@
   "physicsShapePoints":[],
   "physicsStartAwake":true,
   "properties":[
-    {"$GMObjectProperty":"v1","%Name":"Rotate","filters":[
+    {"$GMObjectProperty":"v2","%Name":"Rotate","filters":[
         "GMTileSet",
         "GMSprite",
         "GMSound",

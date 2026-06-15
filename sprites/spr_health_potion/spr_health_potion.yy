@@ -1,5 +1,5 @@
 {
-  "$GMSprite":"",
+  "$GMSprite":"v2",
   "%Name":"spr_health_potion",
   "bboxMode":0,
   "bbox_bottom":11,
@@ -12,12 +12,12 @@
   "edgeFiltering":false,
   "For3D":false,
   "frames":[
-    {"$GMSpriteFrame":"","%Name":"e3133fde-aecf-4dfb-bd29-a780cea3f862","name":"e3133fde-aecf-4dfb-bd29-a780cea3f862","resourceType":"GMSpriteFrame","resourceVersion":"2.0",},
-    {"$GMSpriteFrame":"","%Name":"559fa0e5-1ad5-4fdf-9373-f2c10bf75453","name":"559fa0e5-1ad5-4fdf-9373-f2c10bf75453","resourceType":"GMSpriteFrame","resourceVersion":"2.0",},
-    {"$GMSpriteFrame":"","%Name":"ec10fbdd-e910-4d67-8af1-93abae56b837","name":"ec10fbdd-e910-4d67-8af1-93abae56b837","resourceType":"GMSpriteFrame","resourceVersion":"2.0",},
-    {"$GMSpriteFrame":"","%Name":"226cfe64-6d01-4177-9704-d2fecfdb4b12","name":"226cfe64-6d01-4177-9704-d2fecfdb4b12","resourceType":"GMSpriteFrame","resourceVersion":"2.0",},
-    {"$GMSpriteFrame":"","%Name":"45584099-6fc1-4461-b2c1-4d467c2ba356","name":"45584099-6fc1-4461-b2c1-4d467c2ba356","resourceType":"GMSpriteFrame","resourceVersion":"2.0",},
-    {"$GMSpriteFrame":"","%Name":"a4428a93-39f8-46c8-a380-c994c5d34896","name":"a4428a93-39f8-46c8-a380-c994c5d34896","resourceType":"GMSpriteFrame","resourceVersion":"2.0",},
+    {"$GMSpriteFrame":"v1","%Name":"e3133fde-aecf-4dfb-bd29-a780cea3f862","name":"e3133fde-aecf-4dfb-bd29-a780cea3f862","resourceType":"GMSpriteFrame","resourceVersion":"2.0",},
+    {"$GMSpriteFrame":"v1","%Name":"559fa0e5-1ad5-4fdf-9373-f2c10bf75453","name":"559fa0e5-1ad5-4fdf-9373-f2c10bf75453","resourceType":"GMSpriteFrame","resourceVersion":"2.0",},
+    {"$GMSpriteFrame":"v1","%Name":"ec10fbdd-e910-4d67-8af1-93abae56b837","name":"ec10fbdd-e910-4d67-8af1-93abae56b837","resourceType":"GMSpriteFrame","resourceVersion":"2.0",},
+    {"$GMSpriteFrame":"v1","%Name":"226cfe64-6d01-4177-9704-d2fecfdb4b12","name":"226cfe64-6d01-4177-9704-d2fecfdb4b12","resourceType":"GMSpriteFrame","resourceVersion":"2.0",},
+    {"$GMSpriteFrame":"v1","%Name":"45584099-6fc1-4461-b2c1-4d467c2ba356","name":"45584099-6fc1-4461-b2c1-4d467c2ba356","resourceType":"GMSpriteFrame","resourceVersion":"2.0",},
+    {"$GMSpriteFrame":"v1","%Name":"a4428a93-39f8-46c8-a380-c994c5d34896","name":"a4428a93-39f8-46c8-a380-c994c5d34896","resourceType":"GMSpriteFrame","resourceVersion":"2.0",},
   ],
   "gridX":0,
   "gridY":0,
@@ -37,7 +37,7 @@
   "resourceType":"GMSprite",
   "resourceVersion":"2.0",
   "sequence":{
-    "$GMSequence":"",
+    "$GMSequence":"v1",
     "%Name":"spr_health_potion",
     "autoRecord":true,
     "backdropHeight":768,
@@ -73,24 +73,12 @@
     "timeUnits":1,
     "tracks":[
       {"$GMSpriteFramesTrack":"","builtinName":0,"events":[],"inheritsTrackColour":true,"interpolation":1,"isCreationTrack":false,"keyframes":{"$KeyframeStore<SpriteFrameKeyframe>":"","Keyframes":[
-            {"$Keyframe<SpriteFrameKeyframe>":"","Channels":{
-                "0":{"$SpriteFrameKeyframe":"","Id":{"name":"e3133fde-aecf-4dfb-bd29-a780cea3f862","path":"sprites/spr_health_potion/spr_health_potion.yy",},"resourceType":"SpriteFrameKeyframe","resourceVersion":"2.0",},
-              },"Disabled":false,"id":"802b24a8-86fb-4cf3-9f0a-e7f11f6f1058","IsCreationKey":false,"Key":0.0,"Length":1.0,"resourceType":"Keyframe<SpriteFrameKeyframe>","resourceVersion":"2.0","Stretch":false,},
-            {"$Keyframe<SpriteFrameKeyframe>":"","Channels":{
-                "0":{"$SpriteFrameKeyframe":"","Id":{"name":"559fa0e5-1ad5-4fdf-9373-f2c10bf75453","path":"sprites/spr_health_potion/spr_health_potion.yy",},"resourceType":"SpriteFrameKeyframe","resourceVersion":"2.0",},
-              },"Disabled":false,"id":"8c2fcfb5-98c5-4842-9f69-a462e44c361f","IsCreationKey":false,"Key":1.0,"Length":1.0,"resourceType":"Keyframe<SpriteFrameKeyframe>","resourceVersion":"2.0","Stretch":false,},
-            {"$Keyframe<SpriteFrameKeyframe>":"","Channels":{
-                "0":{"$SpriteFrameKeyframe":"","Id":{"name":"ec10fbdd-e910-4d67-8af1-93abae56b837","path":"sprites/spr_health_potion/spr_health_potion.yy",},"resourceType":"SpriteFrameKeyframe","resourceVersion":"2.0",},
-              },"Disabled":false,"id":"3fbbdd16-ee42-470d-8d9a-f32037475639","IsCreationKey":false,"Key":2.0,"Length":1.0,"resourceType":"Keyframe<SpriteFrameKeyframe>","resourceVersion":"2.0","Stretch":false,},
-            {"$Keyframe<SpriteFrameKeyframe>":"","Channels":{
-                "0":{"$SpriteFrameKeyframe":"","Id":{"name":"226cfe64-6d01-4177-9704-d2fecfdb4b12","path":"sprites/spr_health_potion/spr_health_potion.yy",},"resourceType":"SpriteFrameKeyframe","resourceVersion":"2.0",},
-              },"Disabled":false,"id":"8d4b12e5-99ee-4926-9d25-c54cdbaa749d","IsCreationKey":false,"Key":3.0,"Length":1.0,"resourceType":"Keyframe<SpriteFrameKeyframe>","resourceVersion":"2.0","Stretch":false,},
-            {"$Keyframe<SpriteFrameKeyframe>":"","Channels":{
-                "0":{"$SpriteFrameKeyframe":"","Id":{"name":"45584099-6fc1-4461-b2c1-4d467c2ba356","path":"sprites/spr_health_potion/spr_health_potion.yy",},"resourceType":"SpriteFrameKeyframe","resourceVersion":"2.0",},
-              },"Disabled":false,"id":"497070cd-3945-4a2c-a2aa-0d5c5ff93beb","IsCreationKey":false,"Key":4.0,"Length":1.0,"resourceType":"Keyframe<SpriteFrameKeyframe>","resourceVersion":"2.0","Stretch":false,},
-            {"$Keyframe<SpriteFrameKeyframe>":"","Channels":{
-                "0":{"$SpriteFrameKeyframe":"","Id":{"name":"a4428a93-39f8-46c8-a380-c994c5d34896","path":"sprites/spr_health_potion/spr_health_potion.yy",},"resourceType":"SpriteFrameKeyframe","resourceVersion":"2.0",},
-              },"Disabled":false,"id":"aa40c0bd-9745-40ec-a1e5-a4b0aa5134ec","IsCreationKey":false,"Key":5.0,"Length":1.0,"resourceType":"Keyframe<SpriteFrameKeyframe>","resourceVersion":"2.0","Stretch":false,},
+            {"$Keyframe<SpriteFrameKeyframe>":"","Channels":{"0":{"$SpriteFrameKeyframe":"","Id":{"name":"e3133fde-aecf-4dfb-bd29-a780cea3f862","path":"sprites/spr_health_potion/spr_health_potion.yy",},"resourceType":"SpriteFrameKeyframe","resourceVersion":"2.0",},},"Disabled":false,"id":"802b24a8-86fb-4cf3-9f0a-e7f11f6f1058","IsCreationKey":false,"Key":0.0,"Length":1.0,"resourceType":"Keyframe<SpriteFrameKeyframe>","resourceVersion":"2.0","Stretch":false,},
+            {"$Keyframe<SpriteFrameKeyframe>":"","Channels":{"0":{"$SpriteFrameKeyframe":"","Id":{"name":"559fa0e5-1ad5-4fdf-9373-f2c10bf75453","path":"sprites/spr_health_potion/spr_health_potion.yy",},"resourceType":"SpriteFrameKeyframe","resourceVersion":"2.0",},},"Disabled":false,"id":"8c2fcfb5-98c5-4842-9f69-a462e44c361f","IsCreationKey":false,"Key":1.0,"Length":1.0,"resourceType":"Keyframe<SpriteFrameKeyframe>","resourceVersion":"2.0","Stretch":false,},
+            {"$Keyframe<SpriteFrameKeyframe>":"","Channels":{"0":{"$SpriteFrameKeyframe":"","Id":{"name":"ec10fbdd-e910-4d67-8af1-93abae56b837","path":"sprites/spr_health_potion/spr_health_potion.yy",},"resourceType":"SpriteFrameKeyframe","resourceVersion":"2.0",},},"Disabled":false,"id":"3fbbdd16-ee42-470d-8d9a-f32037475639","IsCreationKey":false,"Key":2.0,"Length":1.0,"resourceType":"Keyframe<SpriteFrameKeyframe>","resourceVersion":"2.0","Stretch":false,},
+            {"$Keyframe<SpriteFrameKeyframe>":"","Channels":{"0":{"$SpriteFrameKeyframe":"","Id":{"name":"226cfe64-6d01-4177-9704-d2fecfdb4b12","path":"sprites/spr_health_potion/spr_health_potion.yy",},"resourceType":"SpriteFrameKeyframe","resourceVersion":"2.0",},},"Disabled":false,"id":"8d4b12e5-99ee-4926-9d25-c54cdbaa749d","IsCreationKey":false,"Key":3.0,"Length":1.0,"resourceType":"Keyframe<SpriteFrameKeyframe>","resourceVersion":"2.0","Stretch":false,},
+            {"$Keyframe<SpriteFrameKeyframe>":"","Channels":{"0":{"$SpriteFrameKeyframe":"","Id":{"name":"45584099-6fc1-4461-b2c1-4d467c2ba356","path":"sprites/spr_health_potion/spr_health_potion.yy",},"resourceType":"SpriteFrameKeyframe","resourceVersion":"2.0",},},"Disabled":false,"id":"497070cd-3945-4a2c-a2aa-0d5c5ff93beb","IsCreationKey":false,"Key":4.0,"Length":1.0,"resourceType":"Keyframe<SpriteFrameKeyframe>","resourceVersion":"2.0","Stretch":false,},
+            {"$Keyframe<SpriteFrameKeyframe>":"","Channels":{"0":{"$SpriteFrameKeyframe":"","Id":{"name":"a4428a93-39f8-46c8-a380-c994c5d34896","path":"sprites/spr_health_potion/spr_health_potion.yy",},"resourceType":"SpriteFrameKeyframe","resourceVersion":"2.0",},},"Disabled":false,"id":"aa40c0bd-9745-40ec-a1e5-a4b0aa5134ec","IsCreationKey":false,"Key":5.0,"Length":1.0,"resourceType":"Keyframe<SpriteFrameKeyframe>","resourceVersion":"2.0","Stretch":false,},
           ],"resourceType":"KeyframeStore<SpriteFrameKeyframe>","resourceVersion":"2.0",},"modifiers":[],"name":"frames","resourceType":"GMSpriteFramesTrack","resourceVersion":"2.0","spriteId":null,"trackColour":0,"tracks":[],"traits":0,},
     ],
     "visibleRange":null,
