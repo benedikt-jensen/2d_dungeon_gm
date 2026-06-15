@@ -94,10 +94,10 @@ if(delta_y != 0){delta_y = max(delta_y,0.2)}
 for(var c = 0; c < global.voron_number_of_players; c++){
 	if(abs(delta_x) == 0){ relex_x = 0.5 }else{ relex_x	= 0.5 + lerp(0,0.5,		  (	global.voron_rawscreenpos_x[c] - mean_x)/delta_x) }
 	if(abs(delta_y) == 0){ relex_y = 0.5 }else{ relex_y	= 0.5 + lerp(0,0.5,		  (	global.voron_rawscreenpos_y[c] - mean_y)/delta_y) }
-	if(abs(delta_x) == 0){ xf		= 0.5 }else{ xf			=		lerp(0.5,0.95,(	global.voron_rawscreenpos_x[c] - mean_x)/delta_x) }
-	if(abs(delta_y) == 0){ yf		= 0.5 }else{ yf			=		lerp(0.5,0.95,(	global.voron_rawscreenpos_y[c] - mean_y)/delta_y) }
 	global.voron_screenpos_x[c] = lerp(global.voron_screenpos_x[c], relex_x, global.voron_lerp_view)
 	global.voron_screenpos_y[c] = lerp(global.voron_screenpos_y[c], relex_y, global.voron_lerp_view)
+	xf = global.voron_screenpos_x[c]
+	yf = global.voron_screenpos_y[c]
 	
 	show_debug_message(string(c) + ": " + string(xf) + " x " + string(yf))
 

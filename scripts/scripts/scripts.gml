@@ -141,3 +141,60 @@ function objects_of_type(_obj_index) {
 	}
 	return _res;
 }
+
+/// @desc Tint character sprites in the world light map by the light level at their feet.
+///       The lighting is a screen-space pass that subtracts the (blurred, inverted) light
+///       map over the whole frame, so a wall's cast shadow normally darkens whatever pixels
+///       are under it -- including a character standing at the wall's base, whose head
+///       overlaps the wall and gets the shadow drawn over it. By overwriting each character's
+///       silhouette in the light map with a single value sampled at its feet, the subtract
+///       pass darkens the whole sprite uniformly (lit if the feet are lit) instead of
+///       per-pixel, so it no longer picks up the wall's shadow on its head.
+///       Must be called on a freshly composited light map (see obj_light_renderer Draw),
+///       otherwise last frame's silhouettes would linger at stale positions.
+/// @arg _camX The active camera's left edge in room space
+/// @arg _camY The active camera's top edge in room space
+function lightmap_tint_characters(_camX, _camY) {
+	var _surf = global.worldShadowMap;
+	if (_surf == undefined || !surface_exists(_surf)) return;
+
+	// Dynamic actors that should be lit by their feet, not per-pixel
+	var _actors = [obj_player, obj_helmet, obj_enemy, obj_enemy_ram,
+		obj_spider, obj_spider_small, obj_bat];
+
+	var _sw = surface_get_width(_surf);
+	var _sh = surface_get_height(_surf);
+
+	// Pass 1: read the light at each actor's feet. This is a GPU readback, so it must happen
+	// before we set the surface as a render target below.
+	var _ids = [];
+	var _cols = [];
+	for (var a = 0; a < array_length(_actors); a++) {
+		with (_actors[a]) {
+			var _fx = floor((bbox_left + bbox_right) * 0.5 - _camX);
+			var _fy = floor(bbox_bottom - 1 - _camY);
+			if (_fx < 0 || _fy < 0 || _fx >= _sw || _fy >= _sh) continue;
+			array_push(_ids, id);
+			array_push(_cols, surface_getpixel(_surf, _fx, _fy));
+		}
+	}
+
+	var _n = array_length(_ids);
+	if (_n == 0) return;
+
+	// Pass 2: stamp each actor's silhouette into the light map with its feet light value.
+	// gpu_set_fog(true, col, 0, 1) forces every drawn fragment to `col` while keeping the
+	// sprite's alpha as a mask (same trick as drawFlashEffect), so only the character's
+	// pixels are overwritten -- the surrounding floor light is left untouched.
+	surface_set_target(_surf);
+	gpu_set_blendmode(bm_normal);
+	for (var i = 0; i < _n; i++) {
+		gpu_set_fog(true, _cols[i], 0, 1);
+		with (_ids[i]) {
+			draw_sprite_ext(sprite_index, image_index, x - _camX, y - _camY,
+				image_xscale, image_yscale, image_angle, c_white, 1);
+		}
+	}
+	gpu_set_fog(false, c_white, 0, 0);
+	surface_reset_target();
+}
