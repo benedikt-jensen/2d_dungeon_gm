@@ -33,11 +33,12 @@ if(dirty || cameraChanged || tick >= global.lightUpdateFrameDelay || global.worl
 else exists = surface_exists(global.worldShadowMap);
 
 if(exists) {
-	// Tint characters by the light at their feet so wall shadows don't fall on their heads.
-	// Only on a fresh composite (the map is cleared each composite); on reused frames the
-	// previous composite's silhouettes are still baked in, so we must not stamp again.
+	// Tint characters (by the light at their feet) and front-facing walls (by the floor in
+	// front of them) so the screen-space shadow pass darkens them uniformly. Only on a fresh
+	// composite (the map is cleared each composite); on reused frames the previous composite's
+	// silhouettes are still baked in, so we must not stamp again.
 	if(recomposited) {
-		lightmap_tint_characters(camera[eLightingCamera.X], camera[eLightingCamera.Y]);
+		lightmap_tint_lit_sprites(camera[eLightingCamera.X], camera[eLightingCamera.Y]);
 	}
 
 	// Draw the shadow map

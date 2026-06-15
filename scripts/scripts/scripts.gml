@@ -142,50 +142,67 @@ function objects_of_type(_obj_index) {
 	return _res;
 }
 
-/// @desc Tint character sprites in the world light map by the light level at their feet.
-///       The lighting is a screen-space pass that subtracts the (blurred, inverted) light
-///       map over the whole frame, so a wall's cast shadow normally darkens whatever pixels
-///       are under it -- including a character standing at the wall's base, whose head
-///       overlaps the wall and gets the shadow drawn over it. By overwriting each character's
-///       silhouette in the light map with a single value sampled at its feet, the subtract
-///       pass darkens the whole sprite uniformly (lit if the feet are lit) instead of
-///       per-pixel, so it no longer picks up the wall's shadow on its head.
+/// @desc Tint sprites in the world light map by the light level at a single sample point,
+///       so the screen-space shadow pass darkens them uniformly instead of per-pixel.
+///
+///       The lighting subtracts the (blurred, inverted) light map over the whole frame, so a
+///       cast shadow normally darkens whatever pixels are under it. Two cases look wrong:
+///         - A character standing at a wall's base: the wall's shadow falls on its head.
+///           Fix: sample the light at the character's feet and tint the whole sprite by it.
+///         - A wall's front face (spr_wall image_index 1, used only where there's open floor
+///           below): the wall is its own shadow caster, so the face it self-shadows and goes
+///           dark even when a light is right in front of it. Fix: sample the lit floor just
+///           below the wall and tint the tile by it, so the face shows when a light is near.
+///
 ///       Must be called on a freshly composited light map (see obj_light_renderer Draw),
 ///       otherwise last frame's silhouettes would linger at stale positions.
+///       Note: this does one surface_getpixel (a GPU readback / stall) per tinted sprite. Fine
+///       for a screenful of actors + wall faces; if it ever shows up in the profiler, replace
+///       the per-sprite reads with a single buffer_get_surface + buffer_peek.
 /// @arg _camX The active camera's left edge in room space
 /// @arg _camY The active camera's top edge in room space
-function lightmap_tint_characters(_camX, _camY) {
+function lightmap_tint_lit_sprites(_camX, _camY) {
 	var _surf = global.worldShadowMap;
 	if (_surf == undefined || !surface_exists(_surf)) return;
-
-	// Dynamic actors that should be lit by their feet, not per-pixel
-	var _actors = [obj_player, obj_helmet, obj_enemy, obj_enemy_ram,
-		obj_spider, obj_spider_small, obj_bat];
 
 	var _sw = surface_get_width(_surf);
 	var _sh = surface_get_height(_surf);
 
-	// Pass 1: read the light at each actor's feet. This is a GPU readback, so it must happen
-	// before we set the surface as a render target below.
+	// Pass 1: read the light at each sprite's sample point. These are GPU readbacks, so they
+	// must happen before we set the surface as a render target below.
 	var _ids = [];
 	var _cols = [];
+
+	// Dynamic actors: sample at the feet (the floor they stand on)
+	var _actors = [obj_player, obj_helmet, obj_enemy, obj_enemy_ram,
+		obj_spider, obj_spider_small, obj_bat];
 	for (var a = 0; a < array_length(_actors); a++) {
 		with (_actors[a]) {
-			var _fx = floor((bbox_left + bbox_right) * 0.5 - _camX);
-			var _fy = floor(bbox_bottom - 1 - _camY);
-			if (_fx < 0 || _fy < 0 || _fx >= _sw || _fy >= _sh) continue;
+			var _sx = floor((bbox_left + bbox_right) * 0.5 - _camX);
+			var _sy = floor(bbox_bottom - 1 - _camY);
+			if (_sx < 0 || _sy < 0 || _sx >= _sw || _sy >= _sh) continue;
 			array_push(_ids, id);
-			array_push(_cols, surface_getpixel(_surf, _fx, _fy));
+			array_push(_cols, surface_getpixel(_surf, _sx, _sy));
 		}
+	}
+
+	// Front-facing walls: sample the floor a few pixels below the wall (in front of the face)
+	with (obj_wall) {
+		if (image_index != 1) continue;
+		var _sx = floor((bbox_left + bbox_right) * 0.5 - _camX);
+		var _sy = floor(bbox_bottom + 3 - _camY);
+		if (_sx < 0 || _sy < 0 || _sx >= _sw || _sy >= _sh) continue;
+		array_push(_ids, id);
+		array_push(_cols, surface_getpixel(_surf, _sx, _sy));
 	}
 
 	var _n = array_length(_ids);
 	if (_n == 0) return;
 
-	// Pass 2: stamp each actor's silhouette into the light map with its feet light value.
+	// Pass 2: stamp each silhouette into the light map with its sampled light value.
 	// gpu_set_fog(true, col, 0, 1) forces every drawn fragment to `col` while keeping the
-	// sprite's alpha as a mask (same trick as drawFlashEffect), so only the character's
-	// pixels are overwritten -- the surrounding floor light is left untouched.
+	// sprite's alpha as a mask (same trick as drawFlashEffect), so only the sprite's pixels
+	// are overwritten -- the surrounding floor light is left untouched.
 	surface_set_target(_surf);
 	gpu_set_blendmode(bm_normal);
 	for (var i = 0; i < _n; i++) {
