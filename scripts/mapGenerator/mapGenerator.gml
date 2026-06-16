@@ -5,7 +5,7 @@ function restart() {
 		generateMap(11+global.currentLevel, 11+global.currentLevel, 2, 8, 10, global.currentLevel);
 		with (obj_player) {
 			hp = 100;
-			arrows = 100;
+			arrows = 3;
 		}
 		global.gameOver = false;
 	}
