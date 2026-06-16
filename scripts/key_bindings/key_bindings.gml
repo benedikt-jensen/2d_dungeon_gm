@@ -1,4 +1,4 @@
-enum VEC_INPUT_DEVICE {
+﻿enum VEC_INPUT_DEVICE {
 	GP_LEFT_STICK,
 	GP_RIGHT_STICK,
 	KEYS,
@@ -28,10 +28,12 @@ function MouseButton(_mb) constructor {
 // A gamepad button, optionally inverted. Used for gp_shoulderlb/gp_shoulderrb (LT/RT), whose
 // "digital" reading is inverted on some pads (idle reads as down, pulling the trigger reads
 // as not-down).
-function GamepadButton(_button, _inverted = false) constructor {
+function GamepadButton(_button, _inverted = false, _is_axis = false, _axis_threshold = 0.25) constructor {
 	type = BTN_TYPE.GAMEPAD;
 	button = _button;
 	inverted = _inverted;
+	is_axis = _is_axis;
+	axis_threshold = _axis_threshold;
 }
 
 function snes_gp_default(_gp_id) {
@@ -75,13 +77,25 @@ function snes_gp_default(_gp_id) {
 // stick to aim. Shoot is the right trigger (RT), interact is the left bumper (LB), and pickup
 // is the A button.
 function eightbitdo_gp_default(_gp_id) {
+	var _aim = new VectorInput(VEC_INPUT_DEVICE.GP_RIGHT_STICK);
+	var _shoot;
+	if (os_type == 24) { // 24 = os_gxgames
+		// gx.games axis layout: a2=right stick X, a4=RT, a5=right stick Y (0-1, 0.5=neutral)
+		_aim.axis_h = 2;
+		_aim.axis_v = 5;
+		_aim.gx_normalize_v = true; // a5 (right stick Y) is 0-1 centred at 0.5; a2 (X) is standard
+		_shoot = new GamepadButton(4, false, true); // RT is axis 4, read as button
+	} else {
+		_shoot = new GamepadButton(gp_shoulderrb);
+	}
+	var _move = new VectorInput(VEC_INPUT_DEVICE.GP_LEFT_STICK);
 	var _b = new PlayerKeyBinding(
 		_gp_id,
-		new VectorInput(VEC_INPUT_DEVICE.GP_LEFT_STICK),
-		new VectorInput(VEC_INPUT_DEVICE.GP_RIGHT_STICK),
-		new GamepadButton(gp_shoulderrb),
-		gp_shoulderl,
-		gp_face1
+		_move,
+		_aim,
+		_shoot,
+		gp_face1,                                  // A = interact (enter door)
+		(os_type == 24) ? gp_shoulderl : gp_face4 // Y = pickup (gp_shoulderl maps to Y on gx.games HID)
 	);
 	_b.auto_gamepad = true;	// track the first connected pad live
 	return _b;
@@ -192,6 +206,14 @@ function PlayerKeyBinding(
 			return mouse_check_button_pressed(_key.button);
 		}
 		if (variable_struct_exists(_key, "type") && _key.type == BTN_TYPE.GAMEPAD) {
+			if (variable_struct_exists(_key, "is_axis") && _key.is_axis) {
+				// RT (or any trigger) exposed as an axis on this platform — edge-detect via threshold
+				var _name = "ax" + string(_key.button);
+				var _down = gamepad_axis_value(self.device, _key.button) > _key.axis_threshold;
+				var _was_down = variable_struct_exists(_gp_prev_down, _name) ? _gp_prev_down[$ _name] : false;
+				_gp_prev_down[$ _name] = _down;
+				return _down && !_was_down;
+			}
 			if (_key.inverted) {
 				// Idle = button-down on this pad; trigger-pulled = button-up.
 				// gamepad_button_check_released fires once on the DOWN→UP transition,
@@ -271,8 +293,17 @@ function PlayerKeyBinding(
 			var _len = point_distance(0, 0, v.x, v.y);
 			if (_len > 1) { v.x /= _len; v.y /= _len; }
 		} else if (_vec_input.vec_input_device == VEC_INPUT_DEVICE.GP_RIGHT_STICK) {
-			v.x = gamepad_axis_value(device, gp_axisrh);
-			v.y = gamepad_axis_value(device, gp_axisrv);
+			// Use axis overrides if the binding supplied them (e.g. HTML5 where right stick is
+			// on axes 4/5 instead of GML's default gp_axisrh=2 / gp_axisrv=3).
+			var _html5 = (os_type == 24); // 24 = os_gxgames
+			var _rh = variable_struct_exists(_vec_input, "axis_h") ? _vec_input.axis_h : (_html5 ? 4 : gp_axisrh);
+			var _rv = variable_struct_exists(_vec_input, "axis_v") ? _vec_input.axis_v : (_html5 ? 5 : gp_axisrv);
+			v.x = gamepad_axis_value(device, _rh);
+			v.y = gamepad_axis_value(device, _rv);
+			// a5 (right stick Y on gx.games) is 0-1 centred at 0.5; remap to standard -1 to 1
+			if (variable_struct_exists(_vec_input, "gx_normalize_v") && _vec_input.gx_normalize_v) {
+				v.y = (v.y - 0.5) * 2;
+			}
 			if (abs(v.x) < stick_deadzone) v.x = 0;
 			if (abs(v.y) < stick_deadzone) v.y = 0;
 		} else {
@@ -365,3 +396,15 @@ function HybridKeyBinding(_kb, _gp) constructor {
 function keyboard_and_gamepad_default() {
 	return new HybridKeyBinding(keyboard_default(), eightbitdo_gp_default(gp_first_connected()));
 }
+
+
+
+
+
+
+
+
+
+
+
+

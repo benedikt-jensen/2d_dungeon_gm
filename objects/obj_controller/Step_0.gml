@@ -1,5 +1,16 @@
 move_to_center(camera_target, objects_of_type(obj_player));
 
+if (instance_exists(obj_player)) {
+    var _cam   = view_camera[0];
+    var _vw    = camera_get_view_width(_cam);
+    var _vh    = camera_get_view_height(_cam);
+    var _new_x = lerp(camera_get_view_x(_cam), obj_player.x - _vw * 0.5, 0.1);
+    var _new_y = lerp(camera_get_view_y(_cam), obj_player.y - _vh * 0.5, 0.1);
+    camera_set_view_pos(_cam,
+        clamp(_new_x, 0, room_width  - _vw),
+        clamp(_new_y, 0, room_height - _vh));
+}
+
 // Gamepad input inspector (only while the F3 debug overlay is on). Logs which slot/button
 // index fires on press and which axes are deflected, so an unknown pad's mapping can be read.
 if (global.show_voron_debug) {

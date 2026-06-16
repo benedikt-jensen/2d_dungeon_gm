@@ -22,8 +22,8 @@ shader_set(sh_voronoimerger)
 	
 	
 	//Everything is ready! Actually draw...
-	var _xscale = display_get_width() / surface_get_width(view_surface_id[0]);
-	var _yscale = display_get_height() / surface_get_height(view_surface_id[0]);
+	var _xscale = display_get_gui_width() / surface_get_width(view_surface_id[0]);
+	var _yscale = display_get_gui_height() / surface_get_height(view_surface_id[0]);
 	draw_surface_ext(view_surface_id[0],0,0,_xscale,_yscale,0,c_white,1);
 }
 shader_reset()

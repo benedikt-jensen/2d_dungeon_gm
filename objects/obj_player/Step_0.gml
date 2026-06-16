@@ -72,7 +72,7 @@ with(obj_arrow) {
 if key_binding.pickup() {
 	with(obj_arrow) {
 		if(travelTime <= 0) {
-			if(point_distance(other.x, other.y, x, y) < 48) {
+			if(point_distance(other.x, other.y, x, y) < other.radius + 8) {
 				audio_play_sound(snd_pick_up_arrow_2,0,0, global.masterVolume);
 				instance_destroy(self);
 				other.arrows++;

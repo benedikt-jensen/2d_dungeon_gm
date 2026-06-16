@@ -1,4 +1,4 @@
-// When dead tint screen black
+﻿// When dead tint screen black
 if global.blackScreen {
 	draw_rectangle_color(0,0,view_wport[0], view_hport[0],0,0,0,1,0)
 }
@@ -58,4 +58,47 @@ if (global.show_voron_debug) {
 
 	draw_set_color(c_white);
 	draw_set_alpha(1);
+
+	// Raw gamepad axis/button monitor -- helps diagnose HTML5 mapping differences.
+	// Enable with F3, then wiggle sticks/press buttons on gx.games to see which index is which.
+	var _gp_slot = gp_first_connected();
+	if (gamepad_is_connected(_gp_slot)) {
+		var _gpx = _l.px;
+		var _gpy = _l.py + _l.ph + 8;
+		var _gpw = _l.pw;
+		var _gph = 32 + 8 * 14 + 16;
+
+		draw_set_alpha(0.75);
+		draw_set_color(c_black);
+		draw_rectangle(_gpx, _gpy, _gpx + _gpw, _gpy + _gph, false);
+		draw_set_alpha(1);
+		draw_set_color(c_white);
+		draw_rectangle(_gpx, _gpy, _gpx + _gpw, _gpy + _gph, true);
+		draw_text(_gpx + 6, _gpy + 3,  "GP" + string(_gp_slot) + "  os=" + string(os_type));
+		draw_text(_gpx + 6, _gpy + 15, "browser=" + string(os_browser));
+
+		for (var _a = 0; _a < 8; _a++) {
+			var _av = gamepad_axis_value(_gp_slot, _a);
+			var _ay = _gpy + 32 + _a * 14;
+			draw_set_color(abs(_av) > 0.25 ? c_yellow : c_ltgray);
+			draw_text(_gpx + 6, _ay, "a" + string(_a) + ": " + string_format(_av, 1, 2));
+			var _bar_x = _gpx + 78;
+			var _bar_w = _gpw - 84;
+			draw_set_color(c_dkgray);
+			draw_rectangle(_bar_x, _ay + 3, _bar_x + _bar_w, _ay + 11, false);
+			draw_set_color(abs(_av) > 0.25 ? c_yellow : c_gray);
+			var _mid = _bar_x + _bar_w * 0.5;
+			draw_rectangle(_mid, _ay + 3, _mid + _av * _bar_w * 0.5, _ay + 11, false);
+		}
+
+		var _btns = "";
+		for (var _b = 0; _b < 20; _b++) {
+			if (gamepad_button_check(_gp_slot, _b)) _btns += string(_b) + " ";
+		}
+		draw_set_color(c_white);
+		draw_text(_gpx + 6, _gpy + 32 + 8 * 14, "btn: " + (_btns == "" ? "-" : _btns));
+	}
 }
+
+
+

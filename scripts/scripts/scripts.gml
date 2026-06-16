@@ -149,11 +149,11 @@ function objects_of_type(_obj_index) {
 ///       same display/view scale the renderer uses, so the two match.
 function screen_mouse_to_room_x() {
 	var _cam = view_camera[0];
-	return camera_get_view_x(_cam) + window_mouse_get_x() * (camera_get_view_width(_cam) / display_get_width());
+	return camera_get_view_x(_cam) + window_mouse_get_x() * (camera_get_view_width(_cam) / display_get_gui_width());
 }
 function screen_mouse_to_room_y() {
 	var _cam = view_camera[0];
-	return camera_get_view_y(_cam) + window_mouse_get_y() * (camera_get_view_height(_cam) / display_get_height());
+	return camera_get_view_y(_cam) + window_mouse_get_y() * (camera_get_view_height(_cam) / display_get_gui_height());
 }
 
 /// @desc Layout (in GUI space) of the F3 debug overlay panel in the top-right corner.
