@@ -27,8 +27,15 @@ function voron_init() {
 	global.voron_split_distance       = 200		//Distance where views split apart, when enabled
 	global.voron_combination_distance = global.voron_splitscreen_enabled ? global.voron_split_distance : infinity
 
-	//Debug overlay (top-right checkbox, toggled with F3)
+	//Debug overlay (top-right, toggled with F3)
 	global.show_voron_debug = false
+	global.debug_drag        = ""	//Which slider is currently being dragged ("", "range", "intensity")
+
+	//Player light tuning, exposed as 0-10 sliders in the debug overlay.
+	//Range is multiplied by 60 to get pixels (so the slider spans 0-600px); intensity is used
+	//as-is. Applied to every obj_light_player each frame. Defaults: 200px range, 2.5 intensity.
+	global.player_light_range_slider     = 200 / 60
+	global.player_light_intensity_slider = 2.5
 
 	//Positions for all players
 	for(var c = 0; c < voron_OBJECTS_MAX; c++){

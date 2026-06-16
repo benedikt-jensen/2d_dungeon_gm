@@ -7,9 +7,9 @@ var _aim_v = _aim_unit.mult(aim_speed);
 target.x += _aim_v.x;
 target.y += _aim_v.y;
 
-if (key_binding.aim_vec_input.vec_input_device == VEC_INPUT_DEVICE.MOUSE) {
-	target.x = mouse_x;
-	target.y = mouse_y;
+if (key_binding.is_mouse_aim()) {
+	target.x = screen_mouse_to_room_x();
+	target.y = screen_mouse_to_room_y();
 } else {
 	var _target_dist = point_distance(x,y+arrow_rel_y,target.x,target.y);
 	var _target_max_dist = 30;
@@ -63,6 +63,20 @@ with(obj_arrow) {
 			audio_play_sound(snd_pick_up_arrow_2,0,0, global.masterVolume);
 			instance_destroy(self);
 			other.arrows++;
+		}
+	}
+}
+
+// Pick up nearby resting arrows on demand - lets the player grab arrows stuck inside/behind
+// a wall that the 12px walk-over pickup above can't reach.
+if key_binding.pickup() {
+	with(obj_arrow) {
+		if(travelTime <= 0) {
+			if(point_distance(other.x, other.y, x, y) < 48) {
+				audio_play_sound(snd_pick_up_arrow_2,0,0, global.masterVolume);
+				instance_destroy(self);
+				other.arrows++;
+			}
 		}
 	}
 }

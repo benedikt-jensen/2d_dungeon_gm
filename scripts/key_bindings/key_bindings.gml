@@ -25,6 +25,15 @@ function MouseButton(_mb) constructor {
 	button = _mb;
 }
 
+// A gamepad button, optionally inverted. Used for gp_shoulderlb/gp_shoulderrb (LT/RT), whose
+// "digital" reading is inverted on some pads (idle reads as down, pulling the trigger reads
+// as not-down).
+function GamepadButton(_button, _inverted = false) constructor {
+	type = BTN_TYPE.GAMEPAD;
+	button = _button;
+	inverted = _inverted;
+}
+
 function snes_gp_default(_gp_id) {
 	gp_id = _gp_id;
 	var _up = function() {
@@ -47,31 +56,63 @@ function snes_gp_default(_gp_id) {
 	return new PlayerKeyBinding(
 		_gp_id,
 		new VectorInput(
-			VEC_INPUT_DEVICE.FUNCTIONS, 
-			_up, 
-			_down, 
-			_left, 
+			VEC_INPUT_DEVICE.FUNCTIONS,
+			_up,
+			_down,
+			_left,
 			_right
 		),
 		new VectorInput(VEC_INPUT_DEVICE.KEYS, 3, 0, 2, 1),
 		gp_shoulderr,
-		gp_shoulderl
+		gp_shoulderl,
+		gp_face1
 	);
+}
+
+// 8BitDo pads (SN30 Pro, Pro 2, Ultimate, ...) present as a standard XInput controller on
+// Windows, so they expose analog sticks and the usual face/shoulder buttons. Unlike the SNES
+// pad (digital D-pad + face buttons), this binding uses the left stick to move and the right
+// stick to aim. Shoot is the right trigger (RT), interact is the left bumper (LB), and pickup
+// is the A button.
+function eightbitdo_gp_default(_gp_id) {
+	var _b = new PlayerKeyBinding(
+		_gp_id,
+		new VectorInput(VEC_INPUT_DEVICE.GP_LEFT_STICK),
+		new VectorInput(VEC_INPUT_DEVICE.GP_RIGHT_STICK),
+		new GamepadButton(gp_shoulderrb),
+		gp_shoulderl,
+		gp_face1
+	);
+	_b.auto_gamepad = true;	// track the first connected pad live
+	return _b;
+}
+
+// Returns the slot of the first connected gamepad, or 0 if none is connected. Handy for
+// assigning a binding without hard-coding which slot the pad happened to land on.
+// Note: gamepad_get_device_count() can under-report the number of slots to scan (it returned
+// a count that excluded a pad sitting on slot 4), so scan a fixed range of slots directly via
+// gamepad_is_connected() instead of bounding the loop by the device count.
+function gp_first_connected() {
+	for (var i = 0; i < 12; i++) {
+		if (gamepad_is_connected(i)) return i;
+	}
+	return 0;
 }
 
 function keyboard_default() {
 	return new PlayerKeyBinding(
 		DEVICE.KEYBOARD,
 		new VectorInput(
-			VEC_INPUT_DEVICE.KEYS, 
-			ord("W"), 
-			ord("S"), 
-			ord("A"), 
+			VEC_INPUT_DEVICE.KEYS,
+			ord("W"),
+			ord("S"),
+			ord("A"),
 			ord("D")
 		),
 		new VectorInput(VEC_INPUT_DEVICE.MOUSE),
 		new MouseButton(mb_left),
-		ord("E")
+		ord("E"),
+		ord("R")
 	);
 }
 
@@ -79,15 +120,16 @@ function keyboard_ply2_default() {
 	return new PlayerKeyBinding(
 		DEVICE.KEYBOARD,
 		new VectorInput(
-			VEC_INPUT_DEVICE.KEYS, 
-			ord("T"), 
-			ord("G"), 
-			ord("F"), 
+			VEC_INPUT_DEVICE.KEYS,
+			ord("T"),
+			ord("G"),
+			ord("F"),
 			ord("H")
 		),
 		new VectorInput(VEC_INPUT_DEVICE.MOUSE),
 		new MouseButton(mb_left),
-		ord("E")
+		ord("E"),
+		ord("Y")
 	);
 }
 
@@ -110,30 +152,66 @@ function VectorInput(_vec_input_device, _up = undefined, _down = undefined, _lef
 /// @param {struct.VectorInput} _move_vec_input
 /// @param {struct.VectorInput} _aim_vec_input
 /// @param _shoot_btn
+/// @param _interact_btn
+/// @param _pickup_btn
 function PlayerKeyBinding(
     _device,
     _move_vec_input,
     _aim_vec_input,
     _shoot_btn,
-	_interact_btn
+	_interact_btn,
+	_pickup_btn
 ) constructor {
     device = _device;
     move_vec_input = _move_vec_input;
     shoot_btn = _shoot_btn;
 	interact_btn = _interact_btn;
+	pickup_btn = _pickup_btn;
     aim_vec_input = _aim_vec_input;
 
+	// When true, this gamepad binding re-resolves its slot to the first connected pad every
+	// time it's read, so it keeps working if the controller enumerates late or lands on a
+	// different slot than when the binding was created. Set by eightbitdo_gp_default.
+	auto_gamepad = false;
+	_refresh = function() {
+		if (auto_gamepad) device = gp_first_connected();
+	}
+
+	// gamepad_button_check_pressed() doesn't edge-detect cleanly for the trigger-derived
+	// "buttons" (gp_shoulderlb/gp_shoulderrb on LT/RT) - it reports down on every frame the
+	// trigger is held, not just the frame it crosses the threshold. Track each gamepad
+	// button's previous state ourselves so pressed() is a true press-edge for those too.
+	_gp_prev_down = {};
+
     pressed = function(_key) {
+		_refresh();
 		if (_key == undefined) {
 			return false;
 		}
 		if (variable_struct_exists(_key, "type") && _key.type == BTN_TYPE.MOUSE) {
 			return mouse_check_button_pressed(_key.button);
 		}
+		if (variable_struct_exists(_key, "type") && _key.type == BTN_TYPE.GAMEPAD) {
+			if (_key.inverted) {
+				// Idle = button-down on this pad; trigger-pulled = button-up.
+				// gamepad_button_check_released fires once on the DOWN→UP transition,
+				// which is exactly when the trigger is physically pressed.
+				return gamepad_button_check_released(self.device, _key.button);
+			}
+			var _name = string(_key.button);
+			var _down = gamepad_button_check(self.device, _key.button);
+			var _was_down = variable_struct_exists(_gp_prev_down, _name) ? _gp_prev_down[$ _name] : false;
+			_gp_prev_down[$ _name] = _down;
+			return _down && !_was_down;
+		}
         if (self.device == DEVICE.KEYBOARD) {
             return keyboard_check_pressed(_key);
         } else {
-            return gamepad_button_check_pressed(self.device, _key);
+			var _name = string(_key);
+			var _down = gamepad_button_check(self.device, _key);
+			var _was_down = variable_struct_exists(_gp_prev_down, _name) ? _gp_prev_down[$ _name] : false;
+			_gp_prev_down[$ _name] = _down;
+			return _down && !_was_down;
         }
     }
 		
@@ -149,6 +227,7 @@ function PlayerKeyBinding(
     }
 		
 	is_down = function(_key, _vec_input_device) {
+		_refresh();
 		if (_key == undefined) {
 			return false;
 		}
@@ -169,31 +248,46 @@ function PlayerKeyBinding(
 	interact = function() {
 		return self.pressed(self.interact_btn);
 	}
-	
+
+	pickup = function() {
+		return self.pressed(self.pickup_btn);
+	}
+
+	// Stick drift below this magnitude is ignored (prevents auto-walk / auto-aim)
+	stick_deadzone = 0.25;
+
 	function get_unit_vec(_vec_input) {
+		_refresh();
 		var v = new Vec2(0,0);
-		show_debug_message("device:"+string(_vec_input.vec_input_device));
 		if (_vec_input.vec_input_device == VEC_INPUT_DEVICE.GP_LEFT_STICK) {
+			// Left stick (with deadzone) OR the d-pad can drive movement
 			v.x = gamepad_axis_value(device, gp_axislh);
 			v.y = gamepad_axis_value(device, gp_axislv);
+			if (abs(v.x) < stick_deadzone) v.x = 0;
+			if (abs(v.y) < stick_deadzone) v.y = 0;
+			v.x += gamepad_button_check(device, gp_padr) - gamepad_button_check(device, gp_padl);
+			v.y += gamepad_button_check(device, gp_padd) - gamepad_button_check(device, gp_padu);
+			// Clamp to unit length so stick + d-pad together can't move faster than max speed
+			var _len = point_distance(0, 0, v.x, v.y);
+			if (_len > 1) { v.x /= _len; v.y /= _len; }
 		} else if (_vec_input.vec_input_device == VEC_INPUT_DEVICE.GP_RIGHT_STICK) {
 			v.x = gamepad_axis_value(device, gp_axisrh);
 			v.y = gamepad_axis_value(device, gp_axisrv);
+			if (abs(v.x) < stick_deadzone) v.x = 0;
+			if (abs(v.y) < stick_deadzone) v.y = 0;
 		} else {
 			var _right = is_down(_vec_input.right,_vec_input.vec_input_device);
 			var _left = is_down(_vec_input.left, _vec_input.vec_input_device);
 			var _up = is_down(_vec_input.up,_vec_input.vec_input_device);
 			var _down = is_down(_vec_input.down,_vec_input.vec_input_device);
-			show_debug_message("isDown("+string(_vec_input.down)+"):" + string(_down));
 			if (_right == 0 && _left == 0 && _up == 0 && _down == 0) {
 				return v;
 			}
-			show_debug_message("right:" + string(_right)+ "_left" + string(_left )+ "_up" +string(_up )+ "_down" + string(_down));
 			var xx = _right - _left;
 			var yy = _down - _up;
-			
+
 			var _dir = point_direction(0,0,xx,yy);
-			v.x = lengthdir_x(1, _dir); 
+			v.x = lengthdir_x(1, _dir);
 			v.y = lengthdir_y(1, _dir);
 		}
 
@@ -210,5 +304,64 @@ function PlayerKeyBinding(
 		}
 		return get_unit_vec(aim_vec_input);
 	}
-	
+
+	// Whether aim_vec() returns an absolute mouse target (true) or a relative
+	// direction (false). Lets obj_player decide how to place the aim reticle.
+	is_mouse_aim = function() {
+		return aim_vec_input.vec_input_device == VEC_INPUT_DEVICE.MOUSE;
+	}
+
+}
+
+/// A binding that accepts keyboard/mouse AND gamepad at the same time. Movement and the
+/// shoot/interact buttons are OR'd across both; aiming follows whichever device was used
+/// most recently (move the mouse -> mouse aim, deflect the right stick -> stick aim).
+/// @param {struct.PlayerKeyBinding} _kb - keyboard/mouse binding
+/// @param {struct.PlayerKeyBinding} _gp - gamepad binding
+function HybridKeyBinding(_kb, _gp) constructor {
+	kb = _kb;
+	gp = _gp;
+	aim_is_mouse = true;	// current aim mode
+	prev_mx = window_mouse_get_x();
+	prev_my = window_mouse_get_y();
+
+	move_vec = function() {
+		var _a = kb.move_vec();
+		var _b = gp.move_vec();
+		var v = new Vec2(_a.x + _b.x, _a.y + _b.y);
+		var _len = point_distance(0, 0, v.x, v.y);
+		if (_len > 1) { v.x /= _len; v.y /= _len; }
+		return v;
+	}
+
+	shoot    = function() { return kb.shoot()    || gp.shoot();    }
+	interact = function() { return kb.interact() || gp.interact(); }
+	pickup   = function() { return kb.pickup()   || gp.pickup();   }
+
+	is_mouse_aim = function() { return aim_is_mouse; }
+
+	aim_vec = function() {
+		// Pick the active aim device this frame. The right stick wins while deflected;
+		// otherwise physically moving the mouse (or clicking) switches back to mouse aim.
+		// Use window-space mouse coords so a moving camera doesn't look like mouse movement.
+		var _stick = gp.aim_vec();
+		var _wmx = window_mouse_get_x();
+		var _wmy = window_mouse_get_y();
+		var _mouse_moved = (_wmx != prev_mx) || (_wmy != prev_my);
+		prev_mx = _wmx;
+		prev_my = _wmy;
+
+		if (_stick.x != 0 || _stick.y != 0) {
+			aim_is_mouse = false;
+		} else if (_mouse_moved || mouse_check_button_pressed(mb_left)) {
+			aim_is_mouse = true;
+		}
+
+		return aim_is_mouse ? kb.aim_vec() : _stick;
+	}
+}
+
+/// Player-one default: keyboard/mouse and gamepad together.
+function keyboard_and_gamepad_default() {
+	return new HybridKeyBinding(keyboard_default(), eightbitdo_gp_default(gp_first_connected()));
 }

@@ -142,22 +142,71 @@ function objects_of_type(_obj_index) {
 	return _res;
 }
 
+/// @desc Room-space position of the OS cursor. The game renders view 0 to a surface and scales
+///       it to the whole display (see obj_viewcontrol Post Draw), so the built-in mouse_x/y
+///       (which assume the view port) don't line up with what's on screen - the in-game cursor
+///       ends up moving faster than the OS cursor. These map the window cursor through the
+///       same display/view scale the renderer uses, so the two match.
+function screen_mouse_to_room_x() {
+	var _cam = view_camera[0];
+	return camera_get_view_x(_cam) + window_mouse_get_x() * (camera_get_view_width(_cam) / display_get_width());
+}
+function screen_mouse_to_room_y() {
+	var _cam = view_camera[0];
+	return camera_get_view_y(_cam) + window_mouse_get_y() * (camera_get_view_height(_cam) / display_get_height());
+}
+
 /// @desc Layout (in GUI space) of the F3 debug overlay panel in the top-right corner.
-///       Shared by the click test (obj_controller Step) and the draw (obj_controller Draw GUI)
-///       so the clickable area always matches what's drawn.
-/// @returns Struct with panel rect {px, py, pw, ph} and checkbox rect {bx, by, box}
+///       Shared by the input handling (obj_controller Step) and the draw (obj_controller Draw
+///       GUI) so the clickable/draggable areas always match what's drawn.
+/// @returns Struct with the panel, checkbox and the two slider tracks
 function debug_overlay_layout() {
 	var _gw = display_get_gui_width();
 	var _pad = 10;
 	var _pw = 250;
-	var _ph = 30;
+	var _ph = 118;
 	var _px = _gw - _pw - _pad;
 	var _py = _pad;
 	var _box = 16;
+	var _track_x = _px + 12;
+	var _track_w = _pw - 24;
 	return {
 		px: _px, py: _py, pw: _pw, ph: _ph,
-		bx: _px + 8, by: _py + (_ph - _box) * 0.5, box: _box
+		// Checkbox row (top)
+		row1_h: 24,
+		bx: _px + 8, by: _py + 8, box: _box,
+		// Range slider
+		range_label_y: _py + 32,
+		range_track_x: _track_x, range_track_y: _py + 52, range_track_w: _track_w,
+		// Intensity slider
+		inten_label_y: _py + 74,
+		inten_track_x: _track_x, inten_track_y: _py + 94, inten_track_w: _track_w,
+		// Shared slider visuals
+		track_h: 4, handle_w: 8, handle_h: 14
 	};
+}
+
+/// @desc Draw a horizontal slider (track + handle) in GUI space. Assumes the caller manages
+///       draw colour; restores it to c_white afterwards. Used by the F3 debug overlay.
+/// @arg _x Track left
+/// @arg _y Track centre line
+/// @arg _w Track width
+/// @arg _track_h Track thickness
+/// @arg _handle_w Handle width
+/// @arg _handle_h Handle height
+/// @arg _t Normalised handle position 0-1
+function debug_overlay_draw_slider(_x, _y, _w, _track_h, _handle_w, _handle_h, _t) {
+	_t = clamp(_t, 0, 1);
+	// Track
+	draw_set_color(c_dkgray);
+	draw_rectangle(_x, _y - _track_h * 0.5, _x + _w, _y + _track_h * 0.5, false);
+	// Filled portion
+	draw_set_color(c_ltgray);
+	draw_rectangle(_x, _y - _track_h * 0.5, _x + _w * _t, _y + _track_h * 0.5, false);
+	// Handle
+	var _hx = _x + _w * _t;
+	draw_set_color(c_white);
+	draw_rectangle(_hx - _handle_w * 0.5, _y - _handle_h * 0.5, _hx + _handle_w * 0.5, _y + _handle_h * 0.5, false);
 }
 
 /// @desc Tint sprites in the world light map by the light level at a single sample point,

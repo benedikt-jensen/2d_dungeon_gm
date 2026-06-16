@@ -99,7 +99,7 @@ for(var c = 0; c < global.voron_number_of_players; c++){
 	xf = global.voron_screenpos_x[c]
 	yf = global.voron_screenpos_y[c]
 	
-	show_debug_message(string(c) + ": " + string(xf) + " x " + string(yf))
+	// show_debug_message(string(c) + ": " + string(xf) + " x " + string(yf))
 
 	global.voron_tlc_x[c] = clamp(global.voron_worldpos_x[c] - VIEW_W*xf,0,room_width  - VIEW_W)
 	global.voron_tlc_y[c] = clamp(global.voron_worldpos_y[c] - VIEW_H*yf,0,room_height - VIEW_H)

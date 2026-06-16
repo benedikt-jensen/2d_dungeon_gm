@@ -21,7 +21,7 @@ var _line_y = _bottom - 10 - _line_height;
 draw_text(_x_offset, _line_y, "Level: " + string(global.currentLevel));
 draw_text(_x_offset + 90, _line_y, string(global.keyFound ? "You found the key!" : "You will need a key."));
 
-// Debug overlay (toggle with F3): checkbox to enable/disable Voronoi split-screen
+// Debug overlay (toggle with F3): split-screen checkbox + player-light sliders
 if (global.show_voron_debug) {
 	var _l = debug_overlay_layout();
 
@@ -40,9 +40,21 @@ if (global.show_voron_debug) {
 		draw_rectangle(_l.bx + 3, _l.by + 3, _l.bx + _l.box - 3, _l.by + _l.box - 3, false);
 		draw_set_color(c_white);
 	}
-
-	// Label
 	draw_text(_l.bx + _l.box + 8, _l.py + 7, "Enable Voronoi Splitscreen");
+
+	// Range slider (0-10 -> 0-600px)
+	var _rv = global.player_light_range_slider;
+	draw_text(_l.range_track_x, _l.range_label_y,
+		"Light Range: " + string(round(_rv * 60)) + "px");
+	debug_overlay_draw_slider(_l.range_track_x, _l.range_track_y, _l.range_track_w,
+		_l.track_h, _l.handle_w, _l.handle_h, _rv / 10);
+
+	// Intensity slider (0-10)
+	var _iv = global.player_light_intensity_slider;
+	draw_text(_l.inten_track_x, _l.inten_label_y,
+		"Light Intensity: " + string(round(_iv * 10) / 10));
+	debug_overlay_draw_slider(_l.inten_track_x, _l.inten_track_y, _l.inten_track_w,
+		_l.track_h, _l.handle_w, _l.handle_h, _iv / 10);
 
 	draw_set_color(c_white);
 	draw_set_alpha(1);
